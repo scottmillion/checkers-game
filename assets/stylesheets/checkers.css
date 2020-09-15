@@ -1,0 +1,59 @@
+
+
+body {
+  background: grey;
+}
+
+.container {
+  width: 80%;
+  background:#592500;
+  margin: auto;
+  padding: 20px;
+  
+}
+
+#board {
+  margin: 10px auto;
+  background: white;
+  outline: 10px solid #cc9763;
+  
+  width: 50%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row-reverse;
+  
+}
+
+
+
+.square {
+  padding: 6.25%;
+}
+
+.darkSquare {
+  background-color: #592500;
+}
+
+.lightSquare {
+  background-color: #e5b585;
+}
+
+.black-piece, .white-piece {
+  background-position: center;
+  background-size: cover;
+}
+
+.black-piece {
+  background-image: url("../images/black_checker_piece.png");
+  
+}
+
+.white-piece {
+  background-image: url("../images/white_checker_piece.png"); 
+}
+
+.active-square {
+  background-color: rgb(172, 33, 33);
+}
