@@ -38,6 +38,7 @@ function legalMove(currentPlayer, opponent, squareNum) {
 }
 
 function legalAttack(player, squareNum) {
+  // need to add logic for if there's a piece in the landing spot or middle spot.
   if (player.name === "player2") {
     return (selectedPiece - 18 === squareNum || selectedPiece - 14 === squareNum) && (player1.squares.includes(selectedPiece - 9) || player1.squares.includes(selectedPiece - 7));
   }
@@ -48,25 +49,32 @@ function playerSwap(player) {
   return player.name === "player2" ? player1 : player2;
 }
 
+function completeMove(prevSquare, nextSquare, player, i) {
+  prevSquare.classList.remove(player.pieceClass);
+  nextSquare.classList.add(player.pieceClass);
+  player.squares[player.squares.indexOf(selectedPiece)] = i;
+
+}
+
+function passTurn() {
+  selectedPiece = null;
+  currentPlayer = playerSwap(currentPlayer);
+}
+
 function attemptMove(player, element, i) {
   let opponent = player === player1 ? player2 : player1;
-  let currentSquare = document.getElementById('n' + selectedPiece);
-  let newSquare = document.getElementById('n' + i);
+  let prevSquare = document.getElementById('n' + selectedPiece);
+  let nextSquare = document.getElementById('n' + i);
   let squareOwner = player.squares.includes(selectedPiece);
 
   if (squareOwner && legalMove(player, opponent, i)) {
-    currentSquare.classList.remove(player.pieceClass);
-    newSquare.classList.add(player.pieceClass);
-    player.squares[player.squares.indexOf(selectedPiece)] = i;
-    selectedPiece = null;
-    currentPlayer = playerSwap(currentPlayer);
+    completeMove(prevSquare, nextSquare, player, i);
+    passTurn();
 
   } else if (squareOwner && legalAttack(player, i)) {
-    console.log("here")
     console.log(selectedPiece);
-    currentSquare.classList.remove(player.pieceClass);
-    newSquare.classList.add(player.pieceClass);
-    player.squares[player.squares.indexOf(selectedPiece)] = i;
+    completeMove(prevSquare, nextSquare, player, i);
+
 
     let opponentLosesPiecePosition1 = (selectedPiece - Math.abs(selectedPiece - i) / 2);
     let opponentLosesPiecePosition2 = (selectedPiece + Math.abs(selectedPiece - i) / 2);
