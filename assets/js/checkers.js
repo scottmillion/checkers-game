@@ -30,30 +30,36 @@ function initializePlayerPieces(player) {
   });
 }
 
+function playerSwap(player) {
+  return player.name === "player2" ? player1 : player2;
+}
+
+function emptySquare(squareNum) {
+  return !player1.squares.includes(squareNum) && !player2.squares.includes(squareNum);
+}
+
 function legalMove(currentPlayer, opponent, squareNum) {
   if (currentPlayer.name === "player2") {
-    return (selectedPiece - 7 === squareNum || selectedPiece - 9 === squareNum) && !currentPlayer.squares.includes(squareNum) && !opponent.squares.includes(squareNum);
+    return (selectedPiece - 7 === squareNum || selectedPiece - 9 === squareNum) && emptySquare(squareNum);
   }
-  return (selectedPiece + 7 === squareNum || selectedPiece + 9 === squareNum) && !currentPlayer.squares.includes(squareNum) && !opponent.squares.includes(squareNum);
+  return (selectedPiece + 7 === squareNum || selectedPiece + 9 === squareNum) && emptySquare(squareNum);
 }
 
 function legalAttack(player, squareNum) {
-  // need to add logic for if there's a piece in the landing spot or middle spot.
-  if (player.name === "player2") {
-    return (selectedPiece - 18 === squareNum || selectedPiece - 14 === squareNum) && (player1.squares.includes(selectedPiece - 9) || player1.squares.includes(selectedPiece - 7));
-  }
-  return (selectedPiece + 18 === squareNum || selectedPiece + 14 === squareNum) && (player2.squares.includes(selectedPiece + 9) || player2.squares.includes(selectedPiece + 7));
-}
-
-function playerSwap(player) {
-  return player.name === "player2" ? player1 : player2;
+  // CHECK PREV SQUARE TO NEXT SQUARE JUMP MATH, IF MIDDLE SQUARE HAS OPPONENT, IF NEXT SQUARE IS UNOCCUPIED.
+  let p1DiagAttack1 = selectedPiece + 18 === squareNum && player2.squares.includes(selectedPiece + 9) && emptySquare(squareNum);
+  let p1DiagAttack2 = selectedPiece + 14 === squareNum && player2.squares.includes(selectedPiece + 7) && emptySquare(squareNum);
+  let p2DiagAttack1 = selectedPiece - 18 === squareNum && player1.squares.includes(selectedPiece - 9) && emptySquare(squareNum);
+  let p2DiagAttack2 = selectedPiece - 14 === squareNum && player1.squares.includes(selectedPiece - 7) && emptySquare(squareNum);
+  if (player.name === "player1" && (p1DiagAttack1 || p1DiagAttack2)) { return true; }
+  if (player.name === "player2" && (p2DiagAttack1 || p2DiagAttack2)) { return true; }
+  return false;
 }
 
 function completeMove(prevSquare, nextSquare, player, i) {
   prevSquare.classList.remove(player.pieceClass);
   nextSquare.classList.add(player.pieceClass);
   player.squares[player.squares.indexOf(selectedPiece)] = i;
-
 }
 
 function passTurn() {
@@ -67,36 +73,50 @@ function attemptMove(player, element, i) {
   let nextSquare = document.getElementById('n' + i);
   let squareOwner = player.squares.includes(selectedPiece);
 
-  if (squareOwner && legalMove(player, opponent, i)) {
+  if (squareOwner && legalMove(player, opponent, i) && legalSquares.includes(i)) {
+    // IF YOU TRY TO MOVE ONE POSITION
     completeMove(prevSquare, nextSquare, player, i);
     passTurn();
 
-  } else if (squareOwner && legalAttack(player, i)) {
+  } else if (squareOwner && legalAttack(player, i) && legalSquares.includes(i)) {
+    // IF YOU TRY TO SINGLE JUMP ANOTHER PIECE
     console.log(selectedPiece);
     completeMove(prevSquare, nextSquare, player, i);
-
 
     let opponentLosesPiecePosition1 = (selectedPiece - Math.abs(selectedPiece - i) / 2);
     let opponentLosesPiecePosition2 = (selectedPiece + Math.abs(selectedPiece - i) / 2);
     if (currentPlayer === player2) {
-      console.log("player2 true");
-      console.log(i);
+      console.log("player2 true", i);
       document.getElementById('n' + opponentLosesPiecePosition1).classList.remove(opponent.pieceClass);
       opponent.squares.splice([opponent.squares.indexOf(opponentLosesPiecePosition1)], 1);
     } else {
-      console.log("player1 true")
-      console.log(i);
+      console.log("player1 true", i);
       document.getElementById('n' + opponentLosesPiecePosition2).classList.remove(opponent.pieceClass);
       opponent.squares.splice([opponent.squares.indexOf(opponentLosesPiecePosition2)], 1);
     }
     console.log(player.squares);
     console.log(opponent.squares);
+    passTurn();
+  } else if (selectedPiece === i) {
+    // YOUR PIECE IS HIGHLIGHTED AND YOU CLICK ON YOUR PIECE A SECOND TIME
+    // REMOVE HIGHLIGHT AND REST selectedPiece
+    element.classList.remove("active-square");
     selectedPiece = null;
-    currentPlayer = playerSwap(currentPlayer);
-  } else if (legalSquares.includes(i)) {
+
+  } else if (player.squares.includes(i)) {
+    // IF YOU CLICK ON A SQUARE WITH YOUR PIECE
+    // SET selectedPiece PIECE AND HIGHLIGHT
     selectedPiece = i;
     console.log(selectedPiece);
     element.classList.toggle("active-square");
+  } else if (legalSquares.includes(i)) {
+    // IF YOU CLICK ON A LEGAL SQUARE THAT DOESN'T CONTAIN YOUR PIECE
+    // REMOVE HIGHLIGHT AND RESET selectedPiece
+    console.log(i);
+    selectedPiece = null;
+    element.classList.remove("active-square");
+  } else {
+    selectedPiece = null;
   }
 }
 

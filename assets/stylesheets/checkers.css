@@ -1,5 +1,3 @@
-
-
 body {
   background: grey;
 }
@@ -16,7 +14,6 @@ body {
   margin: 10px auto;
   background: white;
   outline: 10px solid #cc9763;
-  
   width: 50%;
   display: flex;
   flex-wrap: wrap;
@@ -25,8 +22,6 @@ body {
   flex-direction: row-reverse;
   
 }
-
-
 
 .square {
   padding: 6.25%;
@@ -47,7 +42,6 @@ body {
 
 .black-piece {
   background-image: url("../images/black_checker_piece.png");
-  
 }
 
 .white-piece {
