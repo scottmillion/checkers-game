@@ -9,6 +9,7 @@ function initializePlayers() {
   function Player(name, squares) {
     this.name = name;
     this.squares = squares;
+
   }
   player1 = new Player('player1', [1, 3, 5, 7, 10, 12, 14, 16, 17, 19, 21, 23]);
   player2 = new Player('player2', [42, 44, 46, 48, 49, 51, 53, 55, 58, 60, 62, 64]);
@@ -29,6 +30,8 @@ function initializePlayerPieces(player) {
   player.squares.forEach((num) => {
     document.getElementById(`n${num}`).classList.add(player.pieceClass);
   });
+  // ADD PIECE STATUS ('pawn' OR 'king');
+  player.pieceStatus = ['pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn'];
 }
 
 function playerSwap(player) {
@@ -39,8 +42,8 @@ function emptySquare(squareNum) {
   return !player1.squares.includes(squareNum) && !player2.squares.includes(squareNum) && legalSquares.includes(squareNum);
 }
 
-function legalMove(currentPlayer, opponent, squareNum) {
-  if (currentPlayer.name === "player2") {
+function legalMove(player, squareNum) {
+  if (player === player2) {
     return (selectedPiece - 7 === squareNum || selectedPiece - 9 === squareNum) && emptySquare(squareNum);
   }
   return (selectedPiece + 7 === squareNum || selectedPiece + 9 === squareNum) && emptySquare(squareNum);
@@ -48,13 +51,40 @@ function legalMove(currentPlayer, opponent, squareNum) {
 
 function legalAttack(player, squareNum) {
   // CHECK MATH PREVtoNEXT SQUARE, IF JUMPED SQUARE HAS OPPONENT, IF NEXT SQUARE IS UNOCCUPIED.
-  let p1DiagAttack1 = selectedPiece + 18 === squareNum && player2.squares.includes(selectedPiece + 9) && emptySquare(squareNum);
-  let p1DiagAttack2 = selectedPiece + 14 === squareNum && player2.squares.includes(selectedPiece + 7) && emptySquare(squareNum);
-  let p2DiagAttack1 = selectedPiece - 18 === squareNum && player1.squares.includes(selectedPiece - 9) && emptySquare(squareNum);
-  let p2DiagAttack2 = selectedPiece - 14 === squareNum && player1.squares.includes(selectedPiece - 7) && emptySquare(squareNum);
-  if (player.name === "player1" && (p1DiagAttack1 || p1DiagAttack2)) { return true; }
-  if (player.name === "player2" && (p2DiagAttack1 || p2DiagAttack2)) { return true; }
+  let p1DiagAttack1 = selectedPiece + 18 === squareNum && player2.squares.includes(selectedPiece + 9);
+  let p1DiagAttack2 = selectedPiece + 14 === squareNum && player2.squares.includes(selectedPiece + 7);
+  let p2DiagAttack1 = selectedPiece - 18 === squareNum && player1.squares.includes(selectedPiece - 9);
+  let p2DiagAttack2 = selectedPiece - 14 === squareNum && player1.squares.includes(selectedPiece - 7);
+  if (player === player1 && emptySquare(squareNum)) { return p1DiagAttack1 || p1DiagAttack2; }
+  if (player === player2 && emptySquare(squareNum)) { return p2DiagAttack1 || p2DiagAttack2; }
+  console.log('******err at legalAttack******');
   return false;
+}
+
+function kingMeMaybe(player, newLocation) {
+  let player1KingIndex = [58, 60, 62, 64].indexOf(newLocation);
+  let player2KingIndex = [1, 3, 5, 7].indexOf(newLocation);
+
+  if (player === player1 && player1KingIndex >= 0) {
+    console.log("player 1: king me");
+    player.pieceStatus[player.squares.indexOf(newLocation)] = "king";
+    console.log("-------=============--------");
+    console.log(player.name + " squares.");
+    console.log(player.squares);
+    console.log(player.name + " pieceStatus.");
+    console.log(player.pieceStatus);
+    console.log("-------=============--------");
+  }
+  if (player === player2 && player2KingIndex >= 0) {
+    console.log("player 2: king me");
+    player.pieceStatus[player.squares.indexOf(newLocation)] = "king";
+    console.log("-------=============--------");
+    console.log(player.name + " squares.");
+    console.log(player.squares);
+    console.log(player.name + " pieceStatus.");
+    console.log(player.pieceStatus);
+    console.log("-------=============--------");
+  }
 }
 
 function completeMove(prevSquare, nextSquare, player, i) {
@@ -62,27 +92,39 @@ function completeMove(prevSquare, nextSquare, player, i) {
   prevSquare.classList.remove(player.pieceClass);
   nextSquare.classList.add(player.pieceClass);
   let newLocation = player.squares[player.squares.indexOf(selectedPiece)] = i;
-  if (player === player1 && [58, 60, 62, 64].includes(newLocation)) {
-    console.log("king me")
-  }
-  if (player === player2 && [1, 3, 5, 7].includes(newLocation)) {
-    console.log("king me")
-  }
+  kingMeMaybe(player, newLocation);
   return newLocation;
+}
+
+function removePiece(player, square) {
+  console.log(player);
+  document.getElementById('n' + square).classList.remove(player.pieceClass);
+  let removeIndex = [player.squares.indexOf(square)];
+  console.log(player1.squares);
+  console.log(player1.pieceStatus);
+  console.log(player2.squares);
+  console.log(player2.pieceStatus);
+  console.log('faaaaaaaaaaaa');
+  player.squares.splice(removeIndex, 1);
+  player.pieceStatus.splice(removeIndex, 1);
+  console.log('faaaaaaaaaaaa');
+  console.log(player1.squares);
+  console.log(player1.pieceStatus);
+  console.log(player2.squares);
+  console.log(player2.pieceStatus);
 }
 
 function completeAttack(player, opponent, i) {
   // REMOVE OPPONENT JUMPED PIECE
-  if (player === player1) {
-    let opponentPosition = (selectedPiece + Math.abs(selectedPiece - i) / 2);
-    document.getElementById('n' + opponentPosition).classList.remove(opponent.pieceClass);
-    opponent.squares.splice([opponent.squares.indexOf(opponentPosition)], 1);
-  }
-  if (player === player2) {
-    let opponentPosition = (selectedPiece - Math.abs(selectedPiece - i) / 2);
-    document.getElementById('n' + opponentPosition).classList.remove(opponent.pieceClass);
-    opponent.squares.splice([opponent.squares.indexOf(opponentPosition)], 1);
-  }
+  console.log("player: ", player.name)
+  console.log("opponent: ", opponent.name)
+  let opponentPosition = player === player1 ? (selectedPiece + Math.abs(selectedPiece - i) / 2) : (selectedPiece - Math.abs(selectedPiece - i) / 2);
+  console.log(opponentPosition);
+  console.log(player.squares);
+  console.log(player.pieceStatus);
+  console.log(opponent.squares);
+  console.log(opponent.pieceStatus);
+  removePiece(opponent, opponentPosition);
 }
 
 function passTurn() {
@@ -111,7 +153,7 @@ function firstAction(player, element, i, opponent, prevSquare, nextSquare, squar
   document.querySelectorAll(".legalSquare").forEach((square) => {
     square.classList.remove("active-square");
   });
-  if (squareOwner && legalMove(player, opponent, i) && legalSquares.includes(i)) {
+  if (squareOwner && legalMove(player, i) && legalSquares.includes(i)) {
     // MOVE A PIECE
     completeMove(prevSquare, nextSquare, player, i);
     passTurn();
@@ -207,8 +249,12 @@ function attemptMove(player, element, i) {
   console.log(nextSquare);
   console.log("===============")
 
-
-
+  console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+  console.log(player1.squares.length);
+  console.log(player1.pieceStatus.length);
+  console.log(player2.squares.length);
+  console.log(player2.pieceStatus.length);
+  console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 
   if (!awaitingSecondOptionalAttack) {
     firstAction(player, element, i, opponent, prevSquare, nextSquare, squareOwner);
@@ -258,38 +304,5 @@ initializePlayerPieces(player1);
 initializePlayerPieces(player2);
 
 playGame();
-
-
-
-
-
-
-// GAME OF CHECKERS
-
-// ===START SETUP===
-// DETERMINE WHO GOES FIRST
-// PLACE BOARD AND PIECES
-  // WHITE GOES FIRST  
-  // BLACK GOES 2ND
-// ===END SETUP===
-
-// ===START GAME LOOP===
-  // CHECK IF CurrentPlayer CAN MOVE A PIECE
-    // IF NOT, GAME OVER. STALEMATE.
-  // CurrentPlayer single clicks on a piece, activating CurrentPiece
-    // Is piece 'Kinged'? Then use King logic.
-  // CurrentPlayer clicks on a square
-    // IF (LegalMove, PieceType)
-      // Move piece to new square.
-    // ELSE IF (LegalAttack, PieceType)
-      // Move piece to new square. Remove jumped piece.  
-  // Check if piece is in kingSquares
-    // IF not Kinged, King.
-  // Check if OtherPlayer has any pieces
-    // if not, game over.
-  // Switch Players
-// ===END GAME LOOP===
-
-
 
 

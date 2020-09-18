@@ -48,6 +48,14 @@ body {
   background-image: url("../images/white_checker_piece.png"); 
 }
 
+.black-piece-king {
+  background-image: url("../images/black_checker_piece_king.png");
+}
+
+.white-piece-king {
+  background-image: url("../images/white_checker_piece_king.png"); 
+}
+
 .active-square {
   background-color: rgb(172, 33, 33);
 }
