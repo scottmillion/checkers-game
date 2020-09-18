@@ -15,23 +15,23 @@ function initializePlayers() {
   player2 = new Player('player2', [42, 44, 46, 48, 49, 51, 53, 55, 58, 60, 62, 64]);
 }
 
-function initializePlayerColor(player1, player2) {
+function initializePlayerColorAndPieceClasses(player1, player2) {
+  let whitePawns = ['white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn'];
+  let blackPawns = ['black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn'];
+
   // ADD A COLOR PROPERTY TO EACH PLAYER
   // ADD A CSS CLASS PROPERTY TO STYLE THEIR PIECES
   let color = ["white", "black"];
-  let piecesClass = ["white-piece", "black-piece"];
+  let pieceClasses = [whitePawns, blackPawns];
   let randomIndex = [Math.floor(Math.random() * 2)];
-  [player1.color, player1.pieceClass] = [color.splice(randomIndex, 1)[0], piecesClass.splice(randomIndex, 1)[0]];
-  [player2.color, player2.pieceClass] = [color[0], piecesClass[0]];
-}
+  [player1.color, player1.pieceClasses] = [color.splice(randomIndex, 1)[0], pieceClasses.splice(randomIndex, 1)[0]];
+  [player2.color, player2.pieceClasses] = [color[0], pieceClasses[0]];
 
-function initializePlayerPieces(player) {
   // ADD CSS CLASS TO PLAYER OCCUPIED SQUARES TO SHOW PLAYER PIECES
-  player.squares.forEach((num) => {
-    document.getElementById(`n${num}`).classList.add(player.pieceClass);
-  });
-  // ADD PIECE STATUS ('pawn' OR 'king');
-  player.pieceStatus = ['pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn'];
+  for (let i = 0; i < 12; i++) {
+    document.getElementById(`n${player1.squares[i]}`).classList.add(player1.pieceClasses[i]);
+    document.getElementById(`n${player2.squares[i]}`).classList.add(player2.pieceClasses[i]);
+  }
 }
 
 function playerSwap(player) {
@@ -61,69 +61,48 @@ function legalAttack(player, squareNum) {
   return false;
 }
 
-function kingMeMaybe(player, newLocation) {
+function kingMe(player, newLocation, nextSquare, color) {
+  console.log(player.name + " ****king me****");
+  let colorClass = color === "white" ? "white-piece-king" : "black-piece-king";
+  let currentClass = player.pieceClasses[player.squares.indexOf(newLocation)];
+  nextSquare.classList.remove(currentClass);
+  currentClass = colorClass;
+  nextSquare.classList.add(currentClass);
+  console.log("-------=============--------");
+  console.log(player.name + " squares.");
+  console.log(player.squares);
+  console.log(player.name + " pieceClasses.");
+  console.log(player.pieceClasses);
+  console.log("-------=============--------");
+}
+
+function kingMeMaybe(player, newLocation, nextSquare) {
   let player1KingIndex = [58, 60, 62, 64].indexOf(newLocation);
   let player2KingIndex = [1, 3, 5, 7].indexOf(newLocation);
-
-  if (player === player1 && player1KingIndex >= 0) {
-    console.log("player 1: king me");
-    player.pieceStatus[player.squares.indexOf(newLocation)] = "king";
-    console.log("-------=============--------");
-    console.log(player.name + " squares.");
-    console.log(player.squares);
-    console.log(player.name + " pieceStatus.");
-    console.log(player.pieceStatus);
-    console.log("-------=============--------");
-  }
-  if (player === player2 && player2KingIndex >= 0) {
-    console.log("player 2: king me");
-    player.pieceStatus[player.squares.indexOf(newLocation)] = "king";
-    console.log("-------=============--------");
-    console.log(player.name + " squares.");
-    console.log(player.squares);
-    console.log(player.name + " pieceStatus.");
-    console.log(player.pieceStatus);
-    console.log("-------=============--------");
-  }
+  if (player === player1 && player1KingIndex >= 0) { kingMe(player, newLocation, nextSquare, player.color); }
+  if (player === player2 && player2KingIndex >= 0) { kingMe(player, newLocation, nextSquare, player.color); }
 }
 
 function completeMove(prevSquare, nextSquare, player, i) {
   // MOVE YOUR PIECE TO NEW SQUARE, REMOVE OLD PIECE
-  prevSquare.classList.remove(player.pieceClass);
-  nextSquare.classList.add(player.pieceClass);
+  let currentPieceClass = player.pieceClasses[player.squares.indexOf(selectedPiece)];
+  prevSquare.classList.remove(currentPieceClass);
+  nextSquare.classList.add(currentPieceClass);
   let newLocation = player.squares[player.squares.indexOf(selectedPiece)] = i;
-  kingMeMaybe(player, newLocation);
+  kingMeMaybe(player, newLocation, nextSquare);
   return newLocation;
 }
 
 function removePiece(player, square) {
-  console.log(player);
-  document.getElementById('n' + square).classList.remove(player.pieceClass);
+  document.getElementById('n' + square).classList.remove(player.pieceClasses[player.squares.indexOf(square)]);
   let removeIndex = [player.squares.indexOf(square)];
-  console.log(player1.squares);
-  console.log(player1.pieceStatus);
-  console.log(player2.squares);
-  console.log(player2.pieceStatus);
-  console.log('faaaaaaaaaaaa');
   player.squares.splice(removeIndex, 1);
-  player.pieceStatus.splice(removeIndex, 1);
-  console.log('faaaaaaaaaaaa');
-  console.log(player1.squares);
-  console.log(player1.pieceStatus);
-  console.log(player2.squares);
-  console.log(player2.pieceStatus);
+  player.pieceClasses.splice(removeIndex, 1);
 }
 
 function completeAttack(player, opponent, i) {
   // REMOVE OPPONENT JUMPED PIECE
-  console.log("player: ", player.name)
-  console.log("opponent: ", opponent.name)
   let opponentPosition = player === player1 ? (selectedPiece + Math.abs(selectedPiece - i) / 2) : (selectedPiece - Math.abs(selectedPiece - i) / 2);
-  console.log(opponentPosition);
-  console.log(player.squares);
-  console.log(player.pieceStatus);
-  console.log(opponent.squares);
-  console.log(opponent.pieceStatus);
   removePiece(opponent, opponentPosition);
 }
 
@@ -160,19 +139,14 @@ function firstAction(player, element, i, opponent, prevSquare, nextSquare, squar
   } else if (squareOwner && legalAttack(player, i) && legalSquares.includes(i)) {
     // JUMP A PIECE
     let tempSelected = completeMove(prevSquare, nextSquare, player, i);
-    console.log("---")
-    console.log(tempSelected);
-    console.log("---")
     completeAttack(player, opponent, i);
     if (!anotherAttackAvailable(player, tempSelected)) {
       console.log("No addition legal attacks available");
       passTurn();
     } else {
-      // how do we freeze all options except available attack on selected piece?
       console.log("Another legal attack is available");
       element.classList.add("active-square");
       selectedPiece = tempSelected;
-      console.log('selected piece', selectedPiece);
       awaitingSecondOptionalAttack = true;
       setTimeout(function () {
         let answer = window.prompt("It's still your turn because a ***second*** jump is possible with your current piece. If DO NOT want to make the second jump type 'pass'. Otherwise, type 'ok' or press Enter.");
@@ -212,9 +186,6 @@ function anotherAction(player, element, i, opponent, prevSquare, nextSquare, squ
     });
     // JUMP A PIECE
     let tempSelected = completeMove(prevSquare, nextSquare, player, i);
-    console.log("---")
-    console.log(tempSelected);
-    console.log("---")
     completeAttack(player, opponent, i);
     if (!anotherAttackAvailable(player, tempSelected)) {
       console.log("No addition legal attacks available");
@@ -234,7 +205,6 @@ function anotherAction(player, element, i, opponent, prevSquare, nextSquare, squ
       }, 100);
     }
   }
-  console.log("Here");
 }
 
 function attemptMove(player, element, i) {
@@ -243,27 +213,11 @@ function attemptMove(player, element, i) {
   let nextSquare = document.getElementById('n' + i);
   let squareOwner = player.squares.includes(selectedPiece);
 
-  console.log("===============")
-  console.log('selected piece', selectedPiece);
-  console.log(prevSquare);
-  console.log(nextSquare);
-  console.log("===============")
-
-  console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-  console.log(player1.squares.length);
-  console.log(player1.pieceStatus.length);
-  console.log(player2.squares.length);
-  console.log(player2.pieceStatus.length);
-  console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-
   if (!awaitingSecondOptionalAttack) {
     firstAction(player, element, i, opponent, prevSquare, nextSquare, squareOwner);
   } else {
     anotherAction(player, element, i, opponent, prevSquare, nextSquare, squareOwner);
   }
-
-
-
 }
 
 function initializeBoardSquares() {
@@ -289,20 +243,16 @@ function initializeBoardSquares() {
 
 
 
-function playGame() {
+function startGame() {
   currentPlayer = player1.color === 'white' ? player1 : player2;
-  console.log("Current Player")
-  console.log(currentPlayer.name);
 }
 
 
 
 initializeBoardSquares();
 initializePlayers();
-initializePlayerColor(player1, player2);
-initializePlayerPieces(player1);
-initializePlayerPieces(player2);
+initializePlayerColorAndPieceClasses(player1, player2)
 
-playGame();
+startGame();
 
 

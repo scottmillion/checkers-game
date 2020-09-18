@@ -28,23 +28,23 @@ body {
 }
 
 .darkSquare {
-  background-color: #592500;
+  background-color: #bd5d37;
 }
 
 .lightSquare {
   background-color: #e5b585;
 }
 
-.black-piece, .white-piece {
+.black-pawn, .white-pawn, .black-piece-king, .white-piece-king {
   background-position: center;
   background-size: cover;
 }
 
-.black-piece {
+.black-pawn {
   background-image: url("../images/black_checker_piece.png");
 }
 
-.white-piece {
+.white-pawn {
   background-image: url("../images/white_checker_piece.png"); 
 }
 
@@ -57,5 +57,5 @@ body {
 }
 
 .active-square {
-  background-color: rgb(172, 33, 33);
+  background-color: rgb(218, 42, 42);
 }
