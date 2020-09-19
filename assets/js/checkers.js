@@ -4,6 +4,27 @@ let currentPlayer;
 let selectedPiece = null;
 let awaitingSecondOptionalAttack = false;
 
+function initializeBoardSquares() {
+  for (let i = 64; i > 0; i--) {
+    // CREATE & ADD DIV ELEMENTS FOR SQUARES AND ASSIGN CLASSES, ID ATTRITBUTE
+    let element = document.createElement("div");
+    element.classList.add("square");
+    if (legalSquares.indexOf(i) >= 0) {
+      element.classList.add("darkSquare", "legalSquare");
+    } else {
+      element.classList.add("lightSquare");
+    }
+    element.setAttribute("id", `n${i}`);
+    document.getElementById("board").appendChild(element);
+
+    // ADD EVENT LISTENERS
+    element.addEventListener("click", (e) => {
+      attemptMove(currentPlayer, element, i);
+    });
+
+  }
+}
+
 function initializePlayers() {
   // CREATE TWO PLAYER OBJECT INSTANCES
   function Player(name, squares) {
@@ -37,6 +58,11 @@ function initializePlayerColorAndPieceClasses(player1, player2) {
     document.getElementById(`n${player2.squares[i]}`).classList.add(player2.pieceClasses[i]);
   }
 }
+
+
+
+
+
 
 function playerSwap(player) {
   return player.name === "player2" ? player1 : player2;
@@ -134,27 +160,42 @@ function passTurn() {
 }
 
 function anotherAttackAvailable(player, opponent, tempSelected) {
-  console.log('------------------');
-  console.log(player)
-  console.log(opponent)
-  console.log('temp selected: ' + tempSelected)
   let currentClass = player.pieceClasses[player.squares.indexOf(tempSelected)];
-  console.log(currentClass);
-  console.log('------------------');
   let isEmptyUpOption1 = emptySquare(tempSelected + 18) && opponent.squares.includes(tempSelected + 9);
   let isEmptyUpOption2 = emptySquare(tempSelected + 14) && opponent.squares.includes(tempSelected + 7);
   let isEmptyDownOption1 = emptySquare(tempSelected - 18) && opponent.squares.includes(tempSelected - 9);
   let isEmptyDownOption2 = emptySquare(tempSelected - 14) && opponent.squares.includes(tempSelected - 7);
   let isEmptyAll = isEmptyUpOption1 || isEmptyUpOption2 || isEmptyDownOption1 || isEmptyDownOption2;
+
   //KING PIECE
-  if (currentClass === "black-piece-king" || currentClass === "white-piece-king") {
-    return isEmptyAll;
-  }
+  if (currentClass === "black-piece-king" || currentClass === "white-piece-king") { return isEmptyAll; }
   if (player === player1) { return isEmptyUpOption1 || isEmptyUpOption2; }
   if (player === player2) { return isEmptyDownOption1 || isEmptyDownOption2; }
 
   console.log('error in anotherAttackAvailable');
   return false;
+}
+
+function jumpPiece(player, element, i, opponent, prevSquare, nextSquare) {
+  let tempSelected = completeMove(prevSquare, nextSquare, player, i);
+  completeAttack(opponent, i);
+  if (!anotherAttackAvailable(player, opponent, tempSelected)) {
+    console.log("No addition legal attacks available");
+    passTurn();
+  } else {
+    console.log("Another legal attack is available");
+    element.classList.add("active-square");
+    selectedPiece = tempSelected;
+    awaitingSecondOptionalAttack = true;
+    setTimeout(function () {
+      let answer = window.prompt("It's still your turn because a ***second*** jump is possible with your current piece. If DO NOT want to make the second jump type 'pass'. Otherwise, type 'ok' or press Enter.");
+      if (answer === 'pass') {
+        element.classList.remove("active-square");
+        passTurn()
+      }
+    }, 100);
+  }
+
 }
 
 function firstAction(player, element, i, opponent, prevSquare, nextSquare, squareOwner) {
@@ -167,33 +208,15 @@ function firstAction(player, element, i, opponent, prevSquare, nextSquare, squar
     passTurn();
   } else if (squareOwner && legalAttack(player, opponent, i) && legalSquares.includes(i)) {
     // JUMP A PIECE
-    let tempSelected = completeMove(prevSquare, nextSquare, player, i);
-    completeAttack(opponent, i);
-    if (!anotherAttackAvailable(player, opponent, tempSelected)) {
-      console.log("No addition legal attacks available");
-      passTurn();
-    } else {
-      console.log("Another legal attack is available");
-      element.classList.add("active-square");
-      selectedPiece = tempSelected;
-      awaitingSecondOptionalAttack = true;
-      setTimeout(function () {
-        let answer = window.prompt("It's still your turn because a ***second*** jump is possible with your current piece. If DO NOT want to make the second jump type 'pass'. Otherwise, type 'ok' or press Enter.");
-        if (answer === 'pass') {
-          element.classList.remove("active-square");
-          passTurn()
-        }
-      }, 100);
-    }
+    jumpPiece(player, element, i, opponent, prevSquare, nextSquare);
   } else if (selectedPiece === i) {
     // YOUR PIECE IS HIGHLIGHTED AND YOU CLICK ON YOUR PIECE A SECOND TIME
-    // REMOVE HIGHLIGHT AND REST selectedPiece
+    // REMOVE HIGHLIGHT AND RESET selectedPiece
     element.classList.remove("active-square");
     selectedPiece = null;
-
   } else if (player.squares.includes(i)) {
     // IF YOU CLICK ON A SQUARE WITH YOUR PIECE
-    // SET selectedPiece PIECE AND HIGHLIGHT
+    // SET selectedPiece AND HIGHLIGHT PIECE
     selectedPiece = i;
     element.classList.toggle("active-square");
   } else if (legalSquares.includes(i)) {
@@ -210,28 +233,8 @@ function firstAction(player, element, i, opponent, prevSquare, nextSquare, squar
 
 function anotherAction(player, element, i, opponent, prevSquare, nextSquare, squareOwner) {
   if (squareOwner && legalAttack(player, opponent, i) && legalSquares.includes(i)) {
-    document.querySelectorAll(".legalSquare").forEach((square) => {
-      square.classList.remove("active-square");
-    });
-    // JUMP A PIECE
-    let tempSelected = completeMove(prevSquare, nextSquare, player, i);
-    completeAttack(opponent, i);
-    if (!anotherAttackAvailable(player, opponent, tempSelected)) {
-      console.log("No addition legal attacks available");
-      passTurn();
-    } else {
-      console.log("Another legal attack is available");
-      element.classList.add("active-square");
-      selectedPiece = tempSelected;
-      awaitingSecondOptionalAttack = true;
-      setTimeout(function () {
-        let answer = window.prompt("It's still your turn because a ***second*** jump is possible with your current piece. If DO NOT want to make the second jump type 'pass'. Otherwise, type 'ok' or press Enter.");
-        if (answer === 'pass') {
-          element.classList.remove("active-square");
-          passTurn()
-        }
-      }, 100);
-    }
+    document.querySelectorAll(".legalSquare").forEach((square) => { square.classList.remove("active-square"); });
+    jumpPiece(player, element, i, opponent, prevSquare, nextSquare);
   }
 }
 
@@ -248,26 +251,7 @@ function attemptMove(player, element, i) {
   }
 }
 
-function initializeBoardSquares() {
-  for (let i = 64; i > 0; i--) {
-    // CREATE & ADD DIV ELEMENTS FOR SQUARES AND ASSIGN CLASSES, ID ATTRITBUTE
-    let element = document.createElement("div");
-    element.classList.add("square");
-    if (legalSquares.indexOf(i) >= 0) {
-      element.classList.add("darkSquare", "legalSquare");
-    } else {
-      element.classList.add("lightSquare");
-    }
-    element.setAttribute("id", `n${i}`);
-    document.getElementById("board").appendChild(element);
 
-    // ADD EVENT LISTENERS
-    element.addEventListener("click", (e) => {
-      attemptMove(currentPlayer, element, i);
-    });
-
-  }
-}
 
 
 
