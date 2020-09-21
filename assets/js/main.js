@@ -54,6 +54,9 @@ function initializePlayerColorAndPieceClasses(player1, player2) {
     document.getElementById(`n${player1.squares[i]}`).classList.add(player1.pieceClasses[i]);
     document.getElementById(`n${player2.squares[i]}`).classList.add(player2.pieceClasses[i]);
   }
+
+  document.getElementsByTagName("h2")[0].style.color = player1.color;
+  document.getElementsByTagName("h2")[1].style.color = player2.color;
 }
 
 // =================================================
@@ -72,6 +75,11 @@ function emptySquare(squareNum) {
   return !player1.squares.includes(squareNum) && !player2.squares.includes(squareNum) && legalSquares.includes(squareNum);
 }
 
+function updateDisplayData() {
+  document.getElementsByTagName("span")[0].textContent = player1.squares.length;
+  document.getElementsByTagName("span")[1].textContent = player2.squares.length;
+}
+
 function startGame() {
   initializeBoardSquares();
   [player1, player2]     = initializePlayers();
@@ -79,19 +87,39 @@ function startGame() {
   currentPlayer          = player1.color === 'white' ? player1 : player2;
   selectedPiece          = null;
   additionalAttackOption = false;
+  updateDisplayData();
+}
+
+function resetBoard() {
+  for (let i = 64; i > 0; i--) {
+      let element = document.getElementById("n" + i);
+      element.parentNode.removeChild(element);
+    }
+}
+
+function newGame() {
+  document.querySelector('.alerts').classList.add("hide");
+  resetBoard();
+  startGame();
 }
 
 function passTurn() {
   selectedPiece = null;
   additionalAttackOption = false;
   currentPlayer = playerSwap(currentPlayer);
-  console.log("----------------------------");
-  console.log(currentPlayer.name);
-  console.log(currentPlayer.color);
-  console.log("legal moves? " + areThereAnyLegalMoves(currentPlayer));
-  console.log("legal attacks? " + areThereAnyLegalAttacks(currentPlayer, playerSwap(currentPlayer)));
-  console.log("Game Over? " + !((areThereAnyLegalMoves(currentPlayer)) || areThereAnyLegalAttacks(currentPlayer, playerSwap(currentPlayer))));
-  console.log("----------------------------");
+  if (!(areThereAnyLegalMoves(currentPlayer) || areThereAnyLegalAttacks(currentPlayer, playerSwap(currentPlayer)))) {
+    document.querySelector('.alerts').classList.remove("hide");
+    document.getElementsByTagName("span")[2].innerHTML = "Game Over! " + playerSwap(currentPlayer).name + " wins! " + "<button id='playAgain'>Play Again</button>" ;
+    document.getElementById("playAgain").addEventListener("click", (e) => {
+      newGame();
+    });
+  }
+  if(currentPlayer === player2) {
+    setTimeout(function() { 
+      computerTurn();
+    }, 600);
+    
+  }
 }
 
 // =================================================
@@ -202,8 +230,14 @@ function completeMove(prevSquare, nextSquare, player, squareNum) {
 }
 
 function removeJumpedPiece(opponent, squareNum) {
+  console.log(squareNum);
+  console.log(selectedPiece);
   let opponentPosition = squareNum + ((selectedPiece - squareNum) / 2);
   let removeIndex      = [opponent.squares.indexOf(opponentPosition)];
+  console.log("<<<<<<<<<<<<<<<<<<<<<<<")
+  console.log(opponentPosition);
+  console.log(document.getElementById('n' + opponentPosition));
+  console.log("<<<<<<<<<<<<<<<<<<<<<<<")
   document.getElementById('n' + opponentPosition).classList.remove(opponent.pieceClasses[removeIndex]);
   opponent.squares.splice(removeIndex, 1);
   opponent.pieceClasses.splice(removeIndex, 1);
@@ -212,6 +246,7 @@ function removeJumpedPiece(opponent, squareNum) {
 function jumpPiece(player, squareNum, opponent, prevSquare, nextSquare) {
   let tempSelected = completeMove(prevSquare, nextSquare, player, squareNum);
   removeJumpedPiece(opponent, squareNum);
+  updateDisplayData();
   if (!isThereALegalAttack(player, opponent, tempSelected)) {
     passTurn();
   } else {
@@ -219,19 +254,119 @@ function jumpPiece(player, squareNum, opponent, prevSquare, nextSquare) {
     selectedPiece = tempSelected;
     additionalAttackOption = true;
 
-    setTimeout(function () {
-      let answer = window.prompt("It's still your turn because a ***second*** jump is possible with your current piece. If DO NOT want to make the second jump type 'pass'. Otherwise, type 'ok' or press Enter.");
-      if (answer === 'pass') {
-        nextSquare.classList.remove("active-square");
-        passTurn()
-      }
-    }, 100);
+    let alertBox = document.querySelector('.alerts');
+    alertBox.classList.remove("hide");
+    document.getElementsByTagName("span")[2].innerHTML = "Jump again? <button id='yes'>Yes</button> <button id='no'>No</button>" ;
+    document.getElementById("yes").addEventListener("click", (e) => {
+      alertBox.classList.add("hide");
+    });
+    document.getElementById("no").addEventListener("click", (e) => {
+      alertBox.classList.add("hide");
+      nextSquare.classList.remove("active-square");
+      passTurn();
+    });
   }
 }
 
 // =================================================
-// ================== CONTROLLER ===================
+// ================== CONTROLLERS ==================
 // =================================================
+
+function randomComputerAttack(compSelected, classSelected) {
+  selectedPiece = compSelected;
+  console.log("here");
+  let upRightNum   = compSelected + 18;
+  let upLeftNum    = compSelected + 14;
+  let downRightNum = compSelected - 14;
+  let downLeftNum  = compSelected - 18;
+
+  let isUpRight    = emptySquare(upRightNum) && player1.squares.includes(compSelected + 9);
+  let isUpLeft     = emptySquare(upLeftNum) && player1.squares.includes(compSelected + 7);
+  let isDownRight  = emptySquare(downRightNum) && player1.squares.includes(compSelected - 7);
+  let isDownLeft   = emptySquare(downLeftNum) && player1.squares.includes(compSelected - 9);
+  
+  let attackResults = [isUpRight, isUpLeft, isDownRight, isDownLeft];
+  let legalAttackIndexes = [];
+  for(let i = 0; i < attackResults.length; i++) {
+    console.log("attack results");
+    console.log(attackResults[i]);
+    if (attackResults[i]) {
+      if (classSelected === "black-piece-king" || classSelected === "white-piece-king") { 
+        console.log("king condition met")
+        legalAttackIndexes.push(i);
+      } else if (i === 2 || i === 3) { 
+        console.log("pawn condition met")
+        legalAttackIndexes.push(i);      
+      }
+    }
+  }
+  let chosenAttackIndex = legalAttackIndexes[Math.floor(Math.random() * legalAttackIndexes.length)];
+  let prevSquare = document.getElementById("n" + compSelected);
+
+  if(chosenAttackIndex === 0) { 
+    console.log(upRightNum);
+    console.log(prevSquare);
+    console.log(document.getElementById("n" + upRightNum));
+    console.log(player2.name);
+    console.log(player1.name);
+    jumpPiece(player2, upRightNum, player1, prevSquare, document.getElementById("n" + upRightNum)) 
+  };
+  if(chosenAttackIndex === 1) { 
+    console.log(upLeftNum);
+    console.log(prevSquare);
+    console.log(document.getElementById("n" + upLeftNum));
+    console.log(player2.name);
+    console.log(player1.name);
+    jumpPiece(player2, upLeftNum, player1, prevSquare, document.getElementById("n" + upLeftNum)) 
+  };
+  if(chosenAttackIndex === 2) { 
+    console.log(downRightNum);
+    console.log(prevSquare);
+    console.log(document.getElementById("n" + downRightNum));
+    console.log(player2.name);
+    console.log(player1.name);
+    jumpPiece(player2, downRightNum, player1, prevSquare, document.getElementById("n" + downRightNum)) 
+  };
+  if(chosenAttackIndex === 3) { 
+    console.log(downLeftNum);
+    console.log(prevSquare);
+    console.log(document.getElementById("n" + downLeftNum));
+    console.log(player2.name);
+    console.log(player1.name);
+    jumpPiece(player2, downLeftNum, player1, prevSquare, document.getElementById("n" + downLeftNum)) 
+  };
+
+  console.log('chosen attack num');
+  console.log(chosenAttackIndex);
+  console.log('******err in randomComputerAttack******');
+};
+
+function computerTurn() {
+  if (areThereAnyLegalAttacks(player2, player1)) {
+    let attackSquares = [];
+    let attackClasses = [];
+    for(let i = 0; i < player2.squares.length; i++) {
+      let compSelected = player2.squares[i];
+      if (isThereALegalAttack(player2, player1, compSelected)) {
+        attackSquares.push(compSelected);
+        attackClasses.push(player2.pieceClasses[i]);
+      }
+    }
+    let randomAttackIndex = Math.floor(Math.random() * attackSquares.length);
+    let compSelected = attackSquares[randomAttackIndex];
+    let classSelected = attackClasses[randomAttackIndex];
+    console.log("comp selected")
+    console.log(compSelected);
+    randomComputerAttack(compSelected, classSelected);
+    
+    //MAKE A RANDOM ATTACK
+    //IF CAN ATTACK AGAIN, DO SO
+  } else if (areThereAnyLegalMoves(player2)) {
+    //MAKE A RANDOM MOVE
+  } else {
+    console.log("ERROR IN COMPUTER LOGIC. GAME SHOULD BE OVER");
+  }
+}
 
 function playerTurnAction(player, square, squareNum) {
   // CONTROLLER EXECUTES WHENEVER A PLAYER CLICKS ON A SQUARE (SEE EVENT LISTENER IN initializeBoardSquares())
@@ -240,6 +375,7 @@ function playerTurnAction(player, square, squareNum) {
   let nextSquare  = square;
   let squareOwner = player.squares.includes(selectedPiece);
   let preMoveReq  = squareOwner && legalSquares.includes(squareNum);
+  document.querySelector('.alerts').classList.add("hide");
 
   if (!additionalAttackOption) {
     removeActiveSquareClassFromAllSquares();

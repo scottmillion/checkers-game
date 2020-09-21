@@ -1,26 +1,82 @@
 body {
-  background: grey;
+  background: #592500;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 300;
+  color: rgb(66, 65, 65);
+  height: 1vh;
 }
 
 .container {
   width: 80%;
-  background:#592500;
+  min-width: 1000px;
   margin: auto;
-  padding: 20px;
-  
 }
 
 #board {
-  margin: 10px auto;
   background: white;
   outline: 10px solid #cc9763;
-  width: 50%;
+  width: 550px;
+  margin: 20px auto;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  flex-direction: row-reverse;
+  flex-direction: row-reverse; 
   
+}
+
+.game-data {
+  width: 550px;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;  
+}
+
+.player1-pieces, .player2-pieces {
+  width: 30%;
+  background-color: #cc9763;
+  margin: 10px 0px;
+  padding-bottom: 4px;
+  border: 4px solid #bd5d37; 
+  border-radius: 5px;
+}
+
+h2 {
+  margin-top: 5px;
+  margin-bottom: 8px;
+  text-align: center;
+  font-size: 1rem;
+  letter-spacing: .1rem;
+  font-weight: 500;
+}
+
+p {
+  text-align: center;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.alerts {
+  display: flex;
+  align-content: center;
+  background: #cc9763;
+  width: 520px;
+  margin: auto;
+  margin-top: 25px;
+  border: 3px solid white;
+  border-radius: 5px;
+  padding: 15px;
+  font-size: 1rem;
+}
+
+.alerts span {
+  padding: 10px;
+}
+
+.alerts button {
+ margin-left: 10px;
+ margin-right: 5px;
+ margin-top: 0px;
 }
 
 .square {
@@ -58,4 +114,54 @@ body {
 
 .active-square {
   background-color: rgb(218, 42, 42);
+}
+
+.hide {
+  display: none;
+}
+
+span {
+  background-color: white;
+  padding-left: 3px;
+  padding-right: 4px;
+  border: 1px solid black;
+  border-radius: 5px;
+}
+
+@media (max-width: 1100px) {
+  .container {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  .container {
+    min-width: 100%;
+  }
+
+  #board, .game-data {
+    width: 85%;
+  }
+
+  .alerts {
+    width: 80%;
+  }
+  
+
+  .player1-pieces, .player2-pieces {
+    width: 40%;
+  }
+
+  
+}
+
+@media (max-width: 700px) {
+  
+  * {
+    font-size: 14px;
+  }
+  
+  
+
+  
 }

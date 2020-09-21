@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="./assets/stylesheets/checkers.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
 
   <title>Let's Play Checkers!</title>
 </head>
@@ -12,9 +14,22 @@
 <body>
 
   <div class="container">
+    <div class="game-data">
+      
+      <div class="player1-pieces">
+        <h2>PLAYER 1</h2>
+        <p>Pieces: <span>5</span></p>
+      </div>
+      <div class="player2-pieces">
+        <h2>PLAYER 2</h2>
+        <p>Pieces: <span>5</span></p>
+      </div>
+    </div>
     <div id="board">
 
     </div>
+    <div class="alerts hide"><p><strong>Alert:</strong>&nbsp;&nbsp;<span>Jump again? <button id="yes">Yes</button> <button id="no">No</button></span></p></div>
+    
   </div>
 
   <script src="./assets/js/main.js" ></script>
