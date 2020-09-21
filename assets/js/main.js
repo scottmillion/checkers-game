@@ -249,6 +249,10 @@ function jumpPiece(player, squareNum, opponent, prevSquare, nextSquare) {
   updateDisplayData();
   if (!isThereALegalAttack(player, opponent, tempSelected)) {
     passTurn();
+  } else if (currentPlayer === player2) {
+    setTimeout(function() { 
+      randomComputerAttack(squareNum);
+    }, 600);
   } else {
     nextSquare.classList.add("active-square");
     selectedPiece = tempSelected;
@@ -272,7 +276,8 @@ function jumpPiece(player, squareNum, opponent, prevSquare, nextSquare) {
 // ================== CONTROLLERS ==================
 // =================================================
 
-function randomComputerAttack(compSelected, classSelected) {
+function randomComputerAttack(compSelected) {
+  let classSelected = player2.pieceClasses[player2.squares.indexOf(compSelected)];
   selectedPiece = compSelected;
   console.log("here");
   let upRightNum   = compSelected + 18;
@@ -309,7 +314,8 @@ function randomComputerAttack(compSelected, classSelected) {
     console.log(document.getElementById("n" + upRightNum));
     console.log(player2.name);
     console.log(player1.name);
-    jumpPiece(player2, upRightNum, player1, prevSquare, document.getElementById("n" + upRightNum)) 
+    jumpPiece(player2, upRightNum, player1, prevSquare, document.getElementById("n" + upRightNum));
+    return;
   };
   if(chosenAttackIndex === 1) { 
     console.log(upLeftNum);
@@ -317,7 +323,8 @@ function randomComputerAttack(compSelected, classSelected) {
     console.log(document.getElementById("n" + upLeftNum));
     console.log(player2.name);
     console.log(player1.name);
-    jumpPiece(player2, upLeftNum, player1, prevSquare, document.getElementById("n" + upLeftNum)) 
+    jumpPiece(player2, upLeftNum, player1, prevSquare, document.getElementById("n" + upLeftNum));
+    return;
   };
   if(chosenAttackIndex === 2) { 
     console.log(downRightNum);
@@ -325,7 +332,8 @@ function randomComputerAttack(compSelected, classSelected) {
     console.log(document.getElementById("n" + downRightNum));
     console.log(player2.name);
     console.log(player1.name);
-    jumpPiece(player2, downRightNum, player1, prevSquare, document.getElementById("n" + downRightNum)) 
+    jumpPiece(player2, downRightNum, player1, prevSquare, document.getElementById("n" + downRightNum))
+    return;
   };
   if(chosenAttackIndex === 3) { 
     console.log(downLeftNum);
@@ -333,7 +341,8 @@ function randomComputerAttack(compSelected, classSelected) {
     console.log(document.getElementById("n" + downLeftNum));
     console.log(player2.name);
     console.log(player1.name);
-    jumpPiece(player2, downLeftNum, player1, prevSquare, document.getElementById("n" + downLeftNum)) 
+    jumpPiece(player2, downLeftNum, player1, prevSquare, document.getElementById("n" + downLeftNum));
+    return;
   };
 
   console.log('chosen attack num');
@@ -357,7 +366,7 @@ function computerTurn() {
     let classSelected = attackClasses[randomAttackIndex];
     console.log("comp selected")
     console.log(compSelected);
-    randomComputerAttack(compSelected, classSelected);
+    randomComputerAttack(compSelected);
     
     //MAKE A RANDOM ATTACK
     //IF CAN ATTACK AGAIN, DO SO
