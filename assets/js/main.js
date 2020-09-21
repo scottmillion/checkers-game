@@ -88,6 +88,11 @@ function startGame() {
   selectedPiece          = null;
   additionalAttackOption = false;
   updateDisplayData();
+  if(currentPlayer === player2) {
+    setTimeout(function() { 
+      computerTurn();
+    }, 600);
+  }
 }
 
 function resetBoard() {
@@ -138,8 +143,9 @@ function kingMe(player, newLocation, nextSquare, color) {
 function kingMeMaybe(player, newLocation, nextSquare) {
   let player1KingIndex = [58, 60, 62, 64].indexOf(newLocation);
   let player2KingIndex = [1, 3, 5, 7].indexOf(newLocation);
-  if (player === player1 && player1KingIndex >= 0) { kingMe(player, newLocation, nextSquare, player.color); }
-  if (player === player2 && player2KingIndex >= 0) { kingMe(player, newLocation, nextSquare, player.color); }
+  if (player === player1 && player1KingIndex >= 0) { return kingMe(player, newLocation, nextSquare, player.color); }
+  if (player === player2 && player2KingIndex >= 0) { return kingMe(player, newLocation, nextSquare, player.color); }
+  
 }
 
 // =================================================
@@ -154,6 +160,18 @@ function isLegalMove(player, squareNum) {
   if (player === player1) { return upMove; }
   if (player === player2) { return downMove; }
   console.log("******err at isLegalMove******");
+  return false;
+}
+
+function isThereALegalMove(player, tempSelected) {
+  let currentClass = player.pieceClasses[player.squares.indexOf(tempSelected)];
+  let downMove     = emptySquare(tempSelected - 7) || emptySquare(tempSelected - 9);
+  let upMove       = emptySquare(tempSelected + 7) || emptySquare(tempSelected + 9);
+
+  if (currentClass === "black-piece-king" || currentClass === "white-piece-king") { return downMove || upMove; }
+  if (player === player1) { return upMove; }
+  if (player === player2) { return downMove; }
+  console.log("******err at isThereALegalMove******");
   return false;
 }
 
@@ -350,30 +368,107 @@ function randomComputerAttack(compSelected) {
   console.log('******err in randomComputerAttack******');
 };
 
+function randomComputerMove(compSelected) {
+  let classSelected = player2.pieceClasses[player2.squares.indexOf(compSelected)];
+  selectedPiece = compSelected;
+  console.log("here");
+
+  let upRightNum   = compSelected + 9;
+  let upLeftNum    = compSelected + 7;
+  let downRightNum = compSelected - 7;
+  let downLeftNum  = compSelected - 9;
+
+  let isUpRight    = emptySquare(upRightNum);
+  let isUpLeft     = emptySquare(upLeftNum);
+  let isDownRight  = emptySquare(downRightNum);
+  let isDownLeft   = emptySquare(downLeftNum);
+
+  let moveResults = [isUpRight, isUpLeft, isDownRight, isDownLeft];
+  let legalMoveIndexes = [];
+  for(let i = 0; i < moveResults.length; i++) {
+    console.log("move results");
+    console.log(moveResults[i]);
+    if (moveResults[i]) {
+      if (classSelected === "black-piece-king" || classSelected === "white-piece-king") { 
+        console.log("king condition met")
+        legalMoveIndexes.push(i);
+      } else if (i === 2 || i === 3) { 
+        console.log("pawn condition met")
+        legalMoveIndexes.push(i);      
+      }
+    }
+  }
+  let chosenMoveIndex = legalMoveIndexes[Math.floor(Math.random() * legalMoveIndexes.length)];
+  let prevSquare = document.getElementById("n" + compSelected);
+
+  if(chosenMoveIndex === 0) { 
+    console.log(upRightNum);
+    console.log(prevSquare);
+    console.log(document.getElementById("n" + upRightNum));
+    console.log(player2.name);
+    completeMove(prevSquare, document.getElementById("n" + upRightNum), player2, upRightNum);
+    return;
+  };
+  if(chosenMoveIndex === 1) {
+    console.log(upLeftNum);
+    console.log(prevSquare);
+    console.log(document.getElementById("n" + upLeftNum));
+    console.log(player2.name);
+    completeMove(prevSquare, document.getElementById("n" + upLeftNum), player2, upLeftNum);
+    return;
+  };
+  if(chosenMoveIndex === 2) { 
+    console.log(downRightNum);
+    console.log(prevSquare);
+    console.log(document.getElementById("n" + downRightNum));
+    console.log(player2.name);
+    completeMove(prevSquare, document.getElementById("n" + downRightNum), player2, downRightNum);
+    return;
+  };
+  if(chosenMoveIndex === 3) { 
+    console.log(downLeftNum);
+    console.log(prevSquare);
+    console.log(document.getElementById("n" + downLeftNum));
+    console.log(player2.name);
+    completeMove(prevSquare, document.getElementById("n" + downLeftNum), player2, downLeftNum);
+    return;
+  };
+
+  console.log('chosen move num');
+  console.log(chosenMoveIndex);
+  console.log('******err in randomComputerMove******');
+}
+
 function computerTurn() {
   if (areThereAnyLegalAttacks(player2, player1)) {
     let attackSquares = [];
-    let attackClasses = [];
     for(let i = 0; i < player2.squares.length; i++) {
       let compSelected = player2.squares[i];
       if (isThereALegalAttack(player2, player1, compSelected)) {
         attackSquares.push(compSelected);
-        attackClasses.push(player2.pieceClasses[i]);
       }
     }
     let randomAttackIndex = Math.floor(Math.random() * attackSquares.length);
     let compSelected = attackSquares[randomAttackIndex];
-    let classSelected = attackClasses[randomAttackIndex];
     console.log("comp selected")
     console.log(compSelected);
     randomComputerAttack(compSelected);
-    
-    //MAKE A RANDOM ATTACK
-    //IF CAN ATTACK AGAIN, DO SO
   } else if (areThereAnyLegalMoves(player2)) {
-    //MAKE A RANDOM MOVE
+    let moveSquares = [];
+    for(let i = 0; i < player2.squares.length; i++) {
+      let compSelected = player2.squares[i];
+      if (isThereALegalMove(player2, compSelected)) {
+        moveSquares.push(compSelected);
+      }
+    }
+    let randomMoveIndex = Math.floor(Math.random() * moveSquares.length);
+    let compSelected = moveSquares[randomMoveIndex];
+    console.log("comp selected")
+    console.log(compSelected);
+    randomComputerMove(compSelected);
+    passTurn();
   } else {
-    console.log("ERROR IN COMPUTER LOGIC. GAME SHOULD BE OVER");
+    console.log("ERROR IN COMPUTER LOGIC IF GAME NOT OVER");
   }
 }
 
