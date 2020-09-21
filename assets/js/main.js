@@ -1,8 +1,10 @@
 const legalSquares = [1, 3, 5, 7, 10, 12, 14, 16, 17, 19, 21, 23, 26, 28, 30, 32, 33, 35, 37, 39, 42, 44, 46, 48, 49, 51, 53, 55, 58, 60, 62, 64];
 
-let currentPlayer;
-let selectedPiece = null;
-let awaitingSecondOptionalAttack = false;
+let currentPlayer, selectedPiece, additionalAttackOption, player1, player2;
+
+// =================================================
+// ============== GAME INITIALIZATION ==============
+// =================================================
 
 function initializeBoardSquares() {
   for (let i = 64; i > 0; i--) {
@@ -19,7 +21,7 @@ function initializeBoardSquares() {
 
     // ADD EVENT LISTENERS
     element.addEventListener("click", (e) => {
-      attemptMove(currentPlayer, element, i);
+      playerTurnAction(currentPlayer, element, i);
     });
 
   }
@@ -32,16 +34,15 @@ function initializePlayers() {
     this.squares = squares;
 
   }
-  // player1 = new Player('player1', [1, 3, 5, 7, 10, 12, 14, 16, 17, 19, 21, 23]);
-  // player2 = new Player('player2', [42, 44, 46, 48, 49, 51, 53, 55, 58, 60, 62, 64]);
-  return [new Player('player1', [10, 35, 37, 55]), new Player('player2', [49, 28, 14, 16])];
+  return [new Player('player1', [1, 3, 5, 7, 10, 12, 14, 16, 17, 19, 21, 23]), new Player('player2', [42, 44, 46, 48, 49, 51, 53, 55, 58, 60, 62, 64])];
+  // return [new Player('player1', [10, 35, 37, 55]), new Player('player2', [49, 28, 14, 16])];
 }
 
 function initializePlayerColorAndPieceClasses(player1, player2) {
-  // let whitePawns = ['white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn'];
-  // let blackPawns = ['black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn'];
-  let whitePawns = ['white-pawn', 'white-piece-king', 'white-piece-king', 'white-pawn'];
-  let blackPawns = ['black-pawn', 'black-piece-king', 'black-pawn', 'black-piece-king'];
+  let whitePawns = ['white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn', 'white-pawn'];
+  let blackPawns = ['black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn', 'black-pawn'];
+  // let whitePawns = ['white-pawn', 'white-piece-king', 'white-piece-king', 'white-pawn'];
+  // let blackPawns = ['black-pawn', 'black-piece-king', 'black-pawn', 'black-piece-king'];
 
   // ADD A COLOR PROPERTY TO EACH PLAYER
   // ADD A CSS CLASS PROPERTY TO STYLE THEIR PIECES
@@ -58,15 +59,53 @@ function initializePlayerColorAndPieceClasses(player1, player2) {
   }
 }
 
+// =================================================
+// =========== NON MOVE-ATTACK FUNCTIONS ===========
+// =================================================
+
 function playerSwap(player) {
   return player.name === "player2" ? player1 : player2;
+}
+
+function removeActiveSquareClassFromAllSquares() {
+  document.querySelectorAll(".legalSquare").forEach((square) => { square.classList.remove("active-square"); });
 }
 
 function emptySquare(squareNum) {
   return !player1.squares.includes(squareNum) && !player2.squares.includes(squareNum) && legalSquares.includes(squareNum);
 }
 
-function legalMove(player, squareNum) {
+function passTurn() {
+  selectedPiece = null;
+  additionalAttackOption = false;
+  currentPlayer = playerSwap(currentPlayer);
+}
+
+// =================================================
+// =============== KING ME FUNCTIONS ===============
+// =================================================
+
+function kingMe(player, newLocation, nextSquare, color) {
+  let kingIndex = player.squares.indexOf(newLocation);
+  let currentClass = player.pieceClasses[kingIndex];
+  let newClass = color === "white" ? "white-piece-king" : "black-piece-king";
+  nextSquare.classList.remove(currentClass);
+  nextSquare.classList.add(newClass);
+  player.pieceClasses[kingIndex] = newClass;
+}
+
+function kingMeMaybe(player, newLocation, nextSquare) {
+  let player1KingIndex = [58, 60, 62, 64].indexOf(newLocation);
+  let player2KingIndex = [1, 3, 5, 7].indexOf(newLocation);
+  if (player === player1 && player1KingIndex >= 0) { kingMe(player, newLocation, nextSquare, player.color); }
+  if (player === player2 && player2KingIndex >= 0) { kingMe(player, newLocation, nextSquare, player.color); }
+}
+
+// =================================================
+// ====== IS IT A LEGAL MOVE/ATTACK FUNCTIONS ======
+// =================================================
+
+function isLegalMove(player, squareNum) {
   let currentClass = player.pieceClasses[player.squares.indexOf(selectedPiece)];
   let downMove = (selectedPiece - 7 === squareNum || selectedPiece - 9 === squareNum) && emptySquare(squareNum);
   let upMove = (selectedPiece + 7 === squareNum || selectedPiece + 9 === squareNum) && emptySquare(squareNum);
@@ -81,78 +120,28 @@ function legalMove(player, squareNum) {
   return upMove;
 }
 
-function legalAttack(player, opponent, squareNum) {
+function isLegalAttack(player, opponent, squareNum) {
   // CHECK MATH PREVtoNEXT SQUARE, IF JUMPED SQUARE HAS OPPONENT, IF NEXT SQUARE IS UNOCCUPIED.
+  console.log("----------");
+  console.log("squareNum");
+  console.log(squareNum);
+  console.log("----------");
   let currentClass = player.pieceClasses[player.squares.indexOf(selectedPiece)];
-  let upAttack1 = selectedPiece + 18 === squareNum && opponent.squares.includes(selectedPiece + 9);
-  let upAttack2 = selectedPiece + 14 === squareNum && opponent.squares.includes(selectedPiece + 7);
-  let downAttack1 = selectedPiece - 18 === squareNum && opponent.squares.includes(selectedPiece - 9);
-  let downAttack2 = selectedPiece - 14 === squareNum && opponent.squares.includes(selectedPiece - 7);
+  let upAttack1 = selectedPiece + 18 === squareNum && opponent.squares.includes(selectedPiece + 9) && emptySquare(squareNum);
+  let upAttack2 = selectedPiece + 14 === squareNum && opponent.squares.includes(selectedPiece + 7) && emptySquare(squareNum);
+  let downAttack1 = selectedPiece - 18 === squareNum && opponent.squares.includes(selectedPiece - 9) && emptySquare(squareNum);
+  let downAttack2 = selectedPiece - 14 === squareNum && opponent.squares.includes(selectedPiece - 7) && emptySquare(squareNum);
   let anyAttack = upAttack1 || upAttack2 || downAttack1 || downAttack2;
 
-  if (currentClass === "black-piece-king" || currentClass === "white-piece-king" && emptySquare(squareNum)) { return anyAttack; }
+  if (currentClass === "black-piece-king" || currentClass === "white-piece-king") { return anyAttack; }
   if (player === player1 && emptySquare(squareNum)) { return upAttack1 || upAttack2; }
   if (player === player2 && emptySquare(squareNum)) { return downAttack1 || downAttack2; }
 
-  console.log('******err at legalAttack******');
+  console.log('******err at isLegalAttack******');
   return false;
 }
 
-function kingMe(player, newLocation, nextSquare, color) {
-  console.log(player.name + " ****king me****");
-  let colorClass = color === "white" ? "white-piece-king" : "black-piece-king";
-  let currentClass = player.pieceClasses[player.squares.indexOf(newLocation)];
-  nextSquare.classList.remove(currentClass);
-  currentClass = colorClass;
-  nextSquare.classList.add(currentClass);
-  player.pieceClasses[player.squares.indexOf(newLocation)] = currentClass;
-
-  console.log("-------=============--------");
-  console.log(player.name + " squares:");
-  console.log(player.squares);
-  console.log(player.name + " pieceClasses:");
-  console.log(player.pieceClasses);
-  console.log("-------=============--------");
-}
-
-function kingMeMaybe(player, newLocation, nextSquare) {
-  let player1KingIndex = [58, 60, 62, 64].indexOf(newLocation);
-  let player2KingIndex = [1, 3, 5, 7].indexOf(newLocation);
-  if (player === player1 && player1KingIndex >= 0) { kingMe(player, newLocation, nextSquare, player.color); }
-  if (player === player2 && player2KingIndex >= 0) { kingMe(player, newLocation, nextSquare, player.color); }
-}
-
-function completeMove(prevSquare, nextSquare, player, squareNum) {
-  // MOVE YOUR PIECE TO NEW SQUARE, REMOVE OLD PIECE
-  let currentPieceClass = player.pieceClasses[player.squares.indexOf(selectedPiece)];
-  prevSquare.classList.remove(currentPieceClass);
-  nextSquare.classList.add(currentPieceClass);
-  let newLocation = player.squares[player.squares.indexOf(selectedPiece)] = squareNum;
-  kingMeMaybe(player, newLocation, nextSquare);
-  return newLocation;
-}
-
-function removePiece(player, squareNum) {
-  let removeIndex = [player.squares.indexOf(squareNum)];
-  document.getElementById('n' + squareNum).classList.remove(player.pieceClasses[removeIndex]);
-  player.squares.splice(removeIndex, 1);
-  player.pieceClasses.splice(removeIndex, 1);
-}
-
-function completeAttack(opponent, squareNum) {
-  // REMOVE OPPONENT JUMPED PIECE
-  let opponentPosition = squareNum + ((selectedPiece - squareNum) / 2);
-  removePiece(opponent, opponentPosition);
-}
-
-function passTurn() {
-  selectedPiece = null;
-  currentPlayer = playerSwap(currentPlayer);
-  awaitingSecondOptionalAttack = false;
-
-}
-
-function anotherAttackAvailable(player, opponent, tempSelected) {
+function isThereAnotherLegalAttack(player, opponent, tempSelected) {
   let currentClass = player.pieceClasses[player.squares.indexOf(tempSelected)];
   let isEmptyUpOption1 = emptySquare(tempSelected + 18) && opponent.squares.includes(tempSelected + 9);
   let isEmptyUpOption2 = emptySquare(tempSelected + 14) && opponent.squares.includes(tempSelected + 7);
@@ -165,96 +154,108 @@ function anotherAttackAvailable(player, opponent, tempSelected) {
   if (player === player1) { return isEmptyUpOption1 || isEmptyUpOption2; }
   if (player === player2) { return isEmptyDownOption1 || isEmptyDownOption2; }
 
-  console.log('error in anotherAttackAvailable');
+  console.log('error in isThereAnotherLegalAttack');
   return false;
 }
 
-function jumpPiece(player, element, squareNum, opponent, prevSquare, nextSquare) {
+// =================================================
+// ============ MOVE / ATTACK FUNCTIONS ============
+// =================================================
+
+function completeMove(prevSquare, nextSquare, player, squareNum) {
+  // MOVE YOUR PIECE TO NEW SQUARE, REMOVE OLD PIECE
+  let currentPieceClass = player.pieceClasses[player.squares.indexOf(selectedPiece)];
+  prevSquare.classList.remove(currentPieceClass);
+  nextSquare.classList.add(currentPieceClass);
+  let newLocation = player.squares[player.squares.indexOf(selectedPiece)] = squareNum;
+  kingMeMaybe(player, newLocation, nextSquare);
+  return newLocation;
+}
+
+function removeJumpedPiece(opponent, squareNum) {
+  let opponentPosition = squareNum + ((selectedPiece - squareNum) / 2);
+  let removeIndex = [opponent.squares.indexOf(opponentPosition)];
+  document.getElementById('n' + opponentPosition).classList.remove(opponent.pieceClasses[removeIndex]);
+  opponent.squares.splice(removeIndex, 1);
+  opponent.pieceClasses.splice(removeIndex, 1);
+}
+
+function jumpPiece(player, squareNum, opponent, prevSquare, nextSquare) {
   let tempSelected = completeMove(prevSquare, nextSquare, player, squareNum);
-  completeAttack(opponent, squareNum);
-  if (!anotherAttackAvailable(player, opponent, tempSelected)) {
+  removeJumpedPiece(opponent, squareNum);
+  if (!isThereAnotherLegalAttack(player, opponent, tempSelected)) {
     console.log("No addition legal attacks available");
     passTurn();
   } else {
     console.log("Another legal attack is available");
-    element.classList.add("active-square");
+    nextSquare.classList.add("active-square");
     selectedPiece = tempSelected;
-    awaitingSecondOptionalAttack = true;
+    additionalAttackOption = true;
     setTimeout(function () {
       let answer = window.prompt("It's still your turn because a ***second*** jump is possible with your current piece. If DO NOT want to make the second jump type 'pass'. Otherwise, type 'ok' or press Enter.");
       if (answer === 'pass') {
-        element.classList.remove("active-square");
+        nextSquare.classList.remove("active-square");
         passTurn()
       }
     }, 100);
   }
 }
 
-function firstAction(player, element, squareNum, opponent, prevSquare, nextSquare, squareOwner) {
-  document.querySelectorAll(".legalSquare").forEach((square) => {
-    square.classList.remove("active-square");
-  });
-  if (squareOwner && legalMove(player, squareNum) && legalSquares.includes(squareNum)) {
-    // MOVE A PIECE
-    completeMove(prevSquare, nextSquare, player, squareNum);
-    passTurn();
-  } else if (squareOwner && legalAttack(player, opponent, squareNum) && legalSquares.includes(squareNum)) {
-    // JUMP A PIECE
-    jumpPiece(player, element, squareNum, opponent, prevSquare, nextSquare);
-  } else if (selectedPiece === squareNum) {
-    // YOUR PIECE IS HIGHLIGHTED AND YOU CLICK ON YOUR PIECE A SECOND TIME
-    // REMOVE HIGHLIGHT AND RESET selectedPiece
-    element.classList.remove("active-square");
-    selectedPiece = null;
-  } else if (player.squares.includes(squareNum)) {
-    // IF YOU CLICK ON A SQUARE WITH YOUR PIECE
-    // SET selectedPiece AND HIGHLIGHT PIECE
-    selectedPiece = squareNum;
-    element.classList.toggle("active-square");
-  } else if (legalSquares.includes(squareNum)) {
-    // IF YOU CLICK ON A LEGAL SQUARE THAT DOESN'T CONTAIN YOUR PIECE
-    // REMOVE HIGHLIGHT AND RESET selectedPiece
-    selectedPiece = null;
-    element.classList.remove("active-square");
-  } else {
-    selectedPiece = null;
-  }
-  console.log(squareNum);
-  console.log(selectedPiece);
-}
+// =================================================
+// ================== CONTROLLERS ==================
+// =================================================
 
-function anotherAction(player, element, squareNum, opponent, prevSquare, nextSquare, squareOwner) {
-  if (squareOwner && legalAttack(player, opponent, squareNum) && legalSquares.includes(squareNum)) {
-    document.querySelectorAll(".legalSquare").forEach((square) => { square.classList.remove("active-square"); });
-    jumpPiece(player, element, squareNum, opponent, prevSquare, nextSquare);
-  }
-}
-
-function attemptMove(player, square, squareNum) {
+function playerTurnAction(player, square, squareNum) {
   let opponent = playerSwap(player);
   let prevSquare = document.getElementById('n' + selectedPiece);
-  let nextSquare = document.getElementById('n' + squareNum);
+  let nextSquare = square;
   let squareOwner = player.squares.includes(selectedPiece);
-  console.log("--------")
-  console.log(square);
-  console.log(prevSquare);
-  console.log(nextSquare);
-  console.log("--------")
-  if (!awaitingSecondOptionalAttack) {
-    firstAction(player, square, squareNum, opponent, prevSquare, nextSquare, squareOwner);
+  let preMoveReq = squareOwner && legalSquares.includes(squareNum);
+
+  if (!additionalAttackOption) {
+    removeActiveSquareClassFromAllSquares();
+    if (preMoveReq && isLegalAttack(player, opponent, squareNum)) {
+      jumpPiece(player, squareNum, opponent, prevSquare, nextSquare);
+    } else if (preMoveReq && isLegalMove(player, squareNum)) {
+      completeMove(prevSquare, nextSquare, player, squareNum);
+      passTurn();
+    } else if (selectedPiece === squareNum) {
+      // YOUR PIECE SQUARE IS HIGHLIGHTED AND YOU CLICK ON IT AGAIN
+      nextSquare.classList.remove("active-square");
+      selectedPiece = null;
+    } else if (player.squares.includes(squareNum)) {
+      // YOU CLICK ON A SQUARE WITH YOUR PIECE FOR THE FIRST TIME
+      selectedPiece = squareNum;
+      nextSquare.classList.add("active-square");
+    } else {
+      selectedPiece = null;
+    }
   } else {
-    anotherAction(player, square, squareNum, opponent, prevSquare, nextSquare, squareOwner);
+    if (preMoveReq && isLegalAttack(player, opponent, squareNum)) {
+      removeActiveSquareClassFromAllSquares();
+      jumpPiece(player, squareNum, opponent, prevSquare, nextSquare);
+    }
   }
+
+
+
+  console.log("squareNum: " + squareNum);
+  console.log("selectedPiece: " + selectedPiece);
 }
+
+
 
 function startGame() {
+  initializeBoardSquares();
+  [player1, player2] = initializePlayers();
+  initializePlayerColorAndPieceClasses(player1, player2)
   currentPlayer = player1.color === 'white' ? player1 : player2;
+  selectedPiece = null;
+  additionalAttackOption = false;
 }
 
 
-initializeBoardSquares();
-let [player1, player2] = initializePlayers();
-initializePlayerColorAndPieceClasses(player1, player2)
+
 
 startGame();
 
