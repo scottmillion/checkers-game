@@ -79,6 +79,13 @@ function passTurn() {
   selectedPiece = null;
   additionalAttackOption = false;
   currentPlayer = playerSwap(currentPlayer);
+  console.log("----------------------------");
+  console.log(currentPlayer.name);
+  console.log(currentPlayer.color);
+  console.log("legal moves? " + areThereAnyLegalMoves(currentPlayer));
+  console.log("legal attacks? " + areThereAnyLegalAttacks(currentPlayer, playerSwap(currentPlayer)));
+  console.log("Game Over? " + !((areThereAnyLegalMoves(currentPlayer)) || areThereAnyLegalAttacks(currentPlayer, playerSwap(currentPlayer))));
+  console.log("----------------------------");
 }
 
 // =================================================
@@ -120,12 +127,23 @@ function isLegalMove(player, squareNum) {
   return upMove;
 }
 
+function areThereAnyLegalMoves(player) {
+  let result = false;
+  for (let i = 0; i < player.squares.length; i++) {
+    let squareNum = player.squares[i];
+    let currentClass = player.pieceClasses[i];
+    let isDownMove = emptySquare(squareNum - 7) || emptySquare(squareNum - 9);
+    let isUpMove = emptySquare(squareNum + 7) || emptySquare(squareNum + 9);
+
+    if (currentClass === "black-piece-king" || currentClass === "white-piece-king" && (isDownMove || isUpMove)) { result = true; }
+    if (player === player1 && isUpMove) { result = true; }
+    if (player === player2 && isDownMove) { result = true; }
+  }
+  return result;
+}
+
 function isLegalAttack(player, opponent, squareNum) {
   // CHECK MATH PREVtoNEXT SQUARE, IF JUMPED SQUARE HAS OPPONENT, IF NEXT SQUARE IS UNOCCUPIED.
-  console.log("----------");
-  console.log("squareNum");
-  console.log(squareNum);
-  console.log("----------");
   let currentClass = player.pieceClasses[player.squares.indexOf(selectedPiece)];
   let upAttack1 = selectedPiece + 18 === squareNum && opponent.squares.includes(selectedPiece + 9) && emptySquare(squareNum);
   let upAttack2 = selectedPiece + 14 === squareNum && opponent.squares.includes(selectedPiece + 7) && emptySquare(squareNum);
@@ -134,14 +152,14 @@ function isLegalAttack(player, opponent, squareNum) {
   let anyAttack = upAttack1 || upAttack2 || downAttack1 || downAttack2;
 
   if (currentClass === "black-piece-king" || currentClass === "white-piece-king") { return anyAttack; }
-  if (player === player1 && emptySquare(squareNum)) { return upAttack1 || upAttack2; }
-  if (player === player2 && emptySquare(squareNum)) { return downAttack1 || downAttack2; }
+  if (player === player1) { return upAttack1 || upAttack2; }
+  if (player === player2) { return downAttack1 || downAttack2; }
 
   console.log('******err at isLegalAttack******');
   return false;
 }
 
-function isThereAnotherLegalAttack(player, opponent, tempSelected) {
+function isThereALegalAttack(player, opponent, tempSelected) {
   let currentClass = player.pieceClasses[player.squares.indexOf(tempSelected)];
   let isEmptyUpOption1 = emptySquare(tempSelected + 18) && opponent.squares.includes(tempSelected + 9);
   let isEmptyUpOption2 = emptySquare(tempSelected + 14) && opponent.squares.includes(tempSelected + 7);
@@ -154,8 +172,16 @@ function isThereAnotherLegalAttack(player, opponent, tempSelected) {
   if (player === player1) { return isEmptyUpOption1 || isEmptyUpOption2; }
   if (player === player2) { return isEmptyDownOption1 || isEmptyDownOption2; }
 
-  console.log('error in isThereAnotherLegalAttack');
+  console.log('error in isThereALegalAttack');
   return false;
+}
+
+function areThereAnyLegalAttacks(player, opponent) {
+  let result = false;
+  player.squares.forEach((squareNum) => {
+    if (isThereALegalAttack(player, opponent, squareNum)) { result = true; }
+  })
+  return result;
 }
 
 // =================================================
@@ -183,7 +209,7 @@ function removeJumpedPiece(opponent, squareNum) {
 function jumpPiece(player, squareNum, opponent, prevSquare, nextSquare) {
   let tempSelected = completeMove(prevSquare, nextSquare, player, squareNum);
   removeJumpedPiece(opponent, squareNum);
-  if (!isThereAnotherLegalAttack(player, opponent, tempSelected)) {
+  if (!isThereALegalAttack(player, opponent, tempSelected)) {
     console.log("No addition legal attacks available");
     passTurn();
   } else {
